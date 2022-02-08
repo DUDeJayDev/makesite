@@ -98,7 +98,6 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-
 	}
 
 	if *dir != "" { // We should be operating on the given directory
