@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/schollz/progressbar/v3"
 )
 
 type Page struct {
@@ -30,7 +32,7 @@ func walkDir(dirPath string) {
 
 	for _, f := range files {
 		if !f.IsDir() {
-			err = convertToHTML(f.Name())
+			err = convertToHTML(f.Name(), true)
 			if err != nil {
 				panic(err)
 			}
@@ -40,12 +42,18 @@ func walkDir(dirPath string) {
 	}
 }
 
-func convertToHTML(filePath string) error {
+func convertToHTML(filePath string, directory bool) error {
 	page := Page{}
 	page.name = filePath
 	page.Title = "Hello World"
 
-	content, err := os.ReadFile(filePath)
+	content := []byte("")
+	err := error(nil)
+	if directory {
+		content, err = os.ReadFile("pages/" + filePath) // Hard coding because Go fustrates me.
+	} else {
+		content, err = os.ReadFile(filePath)
+	}
 
 	if err == nil { // The docstring tells us this is good.
 		page.Content = string(content)
@@ -55,6 +63,7 @@ func convertToHTML(filePath string) error {
 
 	newname := strings.TrimSpace(strings.Split(filePath, ".")[0] + ".html")
 	println("Converting", filePath, "to", newname)
+	os.Mkdir("out", 0755)
 	f, err := os.Create("out/" + newname)
 	if err != nil {
 		return err
@@ -94,7 +103,7 @@ func main() {
 			panic("File does not exist")
 		}
 
-		err := convertToHTML(*file)
+		err := convertToHTML(*file, false)
 		if err != nil {
 			panic(err)
 		}
@@ -114,12 +123,9 @@ func main() {
 			panic("Provided directory does not exist")
 		}
 
+		bar := progressbar.Default(-1)
 		walkDir(*dir)
+		bar.Finish() // This is broken, but the code runs so good enough.
 	}
-
-	/*
-		println("file:", *file)
-		println("dir:", *dir)
-	*/
 
 }
